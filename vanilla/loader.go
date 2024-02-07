@@ -12,9 +12,7 @@ type Settings struct {
 }
 
 func (m *Manifest) Download(path string) {
-	var versionId string
-	flag.StringVar(&versionId, "version", "release", "version minecraft")
-	flag.Parse()
+	versionId := flag.Lookup("version").Value.String()
 
 	if err := util.GetFromJson("https://launchermeta.mojang.com/mc/game/version_manifest.json", m); err != nil {
 		log.Panicf("Manifest loading error: %v", err)
@@ -43,15 +41,23 @@ func (m *Manifest) Download(path string) {
 		log.Panicf("Version loading error: %v", err)
 	}
 
-	file, archive := util.OpenOrCreateZip(path, true)
-
-	defer file.Close()
-	defer archive.Close()
-
 	for _, library := range version.Libraries {
+		forWindows := len(library.Rules) == 0
+		for _, rule := range library.Rules {
+			if rule.Os.Name == "windows" {
+				forWindows = true
+			}
+		}
+		if !forWindows {
+			continue
+		}
 		artifact := library.Downloads.Artifact
-		util.DownloadAndAddToZip(artifact.Url, filepath.Join("libraries", artifact.Path), archive)
+		if err := util.DownloadFileWithoutSignature(artifact.Url, filepath.Join(path, "libraries", artifact.Path)); err != nil {
+			panic(err)
+		}
 	}
 
-	util.DownloadAndAddToZip(version.Downloads.Client.Url, "client.jar", archive)
+	if err := util.DownloadFileWithoutSignature(version.Downloads.Client.Url, filepath.Join(path, "client.jar")); err != nil {
+		panic(err)
+	}
 }

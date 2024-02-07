@@ -52,12 +52,7 @@ type Version struct {
 			Artifact Artifact `json:"artifact"`
 		} `json:"downloads"`
 		Name  string `json:"name"`
-		Rules []struct {
-			Action string `json:"action"`
-			Os     struct {
-				Name string `json:"name"`
-			} `json:"os"`
-		} `json:"rules,omitempty"`
+		Rules []Rule `json:"rules,omitempty"`
 	} `json:"libraries"`
 	Logging struct {
 		Client struct {
@@ -87,4 +82,20 @@ type Artifact struct {
 type FileWithId struct {
 	File
 	Id string `json:"id"`
+}
+
+type Rule struct {
+	Action string `json:"action"`
+	Os     struct {
+		Name string `json:"name"`
+	} `json:"os"`
+}
+
+type Asset struct {
+	Hash string `json:"hash"`
+	Size int    `json:"size"`
+}
+
+type JSONData struct {
+	Objects map[string]Asset `json:"objects"`
 }
